@@ -1,31 +1,28 @@
 FROM ubuntu:22.04
 
-# system dependencies install karo
 RUN apt-get update && apt-get install -y \
     curl \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# install ollama
-RUN curl -fsSL https://ollama.ai/install.sh | sh
+RUN curl -fsSL https://ollama.ai/install.sh | bash
 
-# Set working directory
+
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip3 install -r requirements.txt
 
-# Copy your application code
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
 COPY . .
 
-# Create a script to start both Ollama and Flask
-RUN echo '#!/bin/bash\nollama serve &\nsleep 10\npython3 policy_error.py' > start.sh
-RUN chmod +x start.sh
+RUN echo '#!/bin/bash' > /app/start.sh \
+    && echo 'ollama serve &' >> /app/start.sh \
+    && echo 'sleep 10' >> /app/start.sh \
+    && echo 'python3 policy_error.py' >> /app/start.sh \
+    && chmod +x /app/start.sh
 
-# Expose the port your Flask app runs on
 EXPOSE 8000
 
-# Start both Ollama and Flask
-CMD ["./start.sh"]
+CMD ["/app/start.sh"]
