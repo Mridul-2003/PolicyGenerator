@@ -1,13 +1,13 @@
 FROM ubuntu:22.04
 
-# Install system dependencies
+# system dependencies install karo
 RUN apt-get update && apt-get install -y \
     curl \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Ollama
+# install ollama
 RUN curl -fsSL https://ollama.ai/install.sh | sh
 
 # Set working directory
