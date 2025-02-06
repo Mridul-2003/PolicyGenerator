@@ -4,6 +4,8 @@ import os
 import google.generativeai as genai
 from fpdf import FPDF
 import base64
+from eng_to_arabic import EngToArabic
+import asyncio
 app = Flask(__name__)
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Use consistent naming
@@ -24,7 +26,7 @@ def generate_policy():
         "industry",
         "description",
         "company_size",
-        "key_assets_company",
+        "key_assets_company"
     ]
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
@@ -36,6 +38,7 @@ def generate_policy():
     business_activities_description = data["description"]
     company_size = data["company_size"]
     key_information_assets = data["key_assets_company"]
+    language = data["language"]
 
     prompt = f"""
 You are an experienced advocate that knows about every policy globally.
@@ -517,6 +520,13 @@ tables.
         response = model.generate_content(prompt)
         print(response.text)
         generated_policy=response.text
+        if language == "arabic":
+            async def main(policy):
+                engtoarabic = EngToArabic()
+                return await engtoarabic.translate(policy)
+            generated_policy = asyncio.run(main(generated_policy))
+
+
         # Create PDF
         pdf = FPDF()
         pdf.add_page()
@@ -544,4 +554,4 @@ tables.
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8000)), debug=False)
+    app.run(debug=True)
