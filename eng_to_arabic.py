@@ -7,6 +7,13 @@ class EngToArabic:
 	async def translate(self, text):
 		translation = await self.translator.translate(text, dest='ar')
 		return translation.text
+	
+class ArabicToEng:
+	def __init__(self):
+		self.translator = Translator()
+	async def translate(self, text):
+		translation = await self.translator.translate(text, dest='en')
+		return translation.text
 # print(googletrans.LANGUAGES)
 # import asyncio
 
