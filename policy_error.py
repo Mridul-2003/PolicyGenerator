@@ -19,7 +19,8 @@ def chat(msg, user_id, language):
     # Construct the prompt for Gemini
     prompt = """You are an experienced advocate that knows about every policy 
      and can easily list down the errors by seeing the policies given by users. 
-    Be professional and polite to users while talking."""
+    Be professional and polite to users while talking. Greet everyone if they say hello or hi and introduce yourself if anyone 
+    asks about you."""
 
     # Initialize chat history for the user if it doesn't exist
     if user_id not in user_histories:
