@@ -552,6 +552,24 @@ tables.
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route("/compare", methods=["POST"])
+def generate_policy():
+    data = request.get_json()
+    # Input validation (important for security and robustness)
+    required_fields = [
+        "policy1",
+        "policy2"
+    ]
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+    policy_text1 = data["policy1"]
+    policy_text2 = data["policy2"]
+    # Generate the comparison
+    prompt = f"Compare the following two policies:\n\nPolicy 1:\n{policy_text1}\n\nPolicy 2:\n{policy_text2}\n\nComparison:.Give comparisons in points."
+    response = model.generate_content(prompt)
+    print(response.text)
+    comparison=response.text
+    return jsonify({"comparison": comparison})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
