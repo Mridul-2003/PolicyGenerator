@@ -553,7 +553,7 @@ tables.
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 @app.route("/compare", methods=["POST"])
-def generate_policy():
+def compare_policy():
     data = request.get_json()
     # Input validation (important for security and robustness)
     required_fields = [
