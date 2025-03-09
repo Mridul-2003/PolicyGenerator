@@ -93,4 +93,4 @@ polite to users while talking.
     theme="soft"
 )
 
-chatbot.launch(share=True)
+chatbot.launch(share=True,server_port=7860)
