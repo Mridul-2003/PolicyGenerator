@@ -93,4 +93,5 @@ polite to users while talking.
     theme="soft"
 )
 
-chatbot.launch(share=True,server_port=7860)
+port = int(os.environ.get("PORT", 7860)) # Default to 7860 locally if PORT isn't set
+chatbot.launch(server_port=port)
