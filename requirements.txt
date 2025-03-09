@@ -4,3 +4,4 @@ python-dotenv
 fpdf
 ollama
 googletrans
+gradio
