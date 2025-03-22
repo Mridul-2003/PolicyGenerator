@@ -10,13 +10,4 @@ streamlit==1.15.2
 streamlit-chat==0.1.1
 speechrecognition==3.8.1
 pyaudio==0.2.11
-sentence-transformers
-langchain-chroma>=0.1.2
-pandas
-numpy
-langchain
-langchain-google-genai==2.1.1
-PyMuPDF
-torch==2.0.1
-transformers==4.41.0
-ipython
+
