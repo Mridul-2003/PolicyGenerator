@@ -15,7 +15,7 @@ langchain-chroma>=0.1.2
 pandas
 numpy
 langchain
-langchain-google-genai
+langchain-google-genai==2.1.1
 PyMuPDF
 torch==2.0.1
 transformers==4.41.0
