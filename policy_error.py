@@ -1,45 +1,49 @@
 from flask import Flask, request, jsonify, Response
-import ollama
-import google.generativeai as genai
+from openai import OpenAI
 from dotenv import load_dotenv
 from eng_to_arabic import EngToArabic
 from eng_to_arabic import ArabicToEng
 import asyncio
 import os
-# ollama.pull('llama3.2:1b')
+
+# Initialize Flask App
 app = Flask(__name__)
+
+# Load environment variables
 load_dotenv()
-GEMINI_API = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Initialize OpenAI client
+client = OpenAI(api_key=OPENAI_API_KEY)
+
 # Dictionary to store conversation history for each user
 user_histories = {}
 
 def chat(msg, user_id, language):
-    
-    # Construct the prompt for Gemini
+    # Construct the prompt for OpenAI
     prompt = """You are an experienced advocate that knows about every policy 
-     and can easily list down the errors by seeing the policies given by users. 
-    Be professional and polite to users while talking. Greet everyone if they say hello or hi and introduce yourself if anyone 
-    asks about you.Don't say understood again and again just give straight forward answers to users like you are talking to them as an professional advocate."""
+    and can easily list down the errors by seeing the policies given by users. 
+    Be professional and polite to users while talking. Greet everyone if they say hello or hi by saying hello and welcome the user and introduce yourself if anyone 
+    asks about you. Don't say understood again and again; just give straightforward answers to users like you are talking to them as a professional advocate."""
 
     # Initialize chat history for the user if it doesn't exist
     if user_id not in user_histories:
-        user_histories[user_id] = []
-
+        user_histories[user_id] = [{"role": "system", "content": prompt}]
+    
     # Add the user's message to the history
-    user_histories[user_id].append({"role": "user", "parts": [msg]})  # Changed for Gemini API
+    user_histories[user_id].append({"role": "user", "content": msg})
 
-    # Get response from Gemini
-    model = genai.GenerativeModel('gemini-2.0-flash') # Choose your model, experiment with 1.5 pro too
-    # For the Gemini API, you might want to create a new chat session for each call to chat()
-    chat_session = model.start_chat(history=user_histories[user_id]) # Use current history
+    # Get response from OpenAI
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",  # Use the specified model
+        store=True,
+        messages=user_histories[user_id]
+    )
 
-    response = chat_session.send_message(prompt)  # Send the prompt directly
+    message = completion.choices[0].message.content
 
-    message = response.text  # Extract the text from the Gemini response
-
-    # Add the AI's response to the history. Gemini expects a specific format
-    user_histories[user_id].append({"role": "model", "parts": [message]}) # Changed for Gemini API
+    # Add the AI's response to the history
+    user_histories[user_id].append({"role": "assistant", "content": message})
 
     if language == "arabic":
         async def main(policy):
@@ -59,12 +63,13 @@ def policy_chat():
     language = data.get('language')
 
     if language == "arabic":
-            async def main(policy):
-                arabictoenglish = ArabicToEng()
-                return await arabictoenglish.translate(policy)
-            msg = asyncio.run(main(msg))
-    reply = chat(msg,user_id,language)
+        async def main(policy):
+            arabictoenglish = ArabicToEng()
+            return await arabictoenglish.translate(policy)
+        msg = asyncio.run(main(msg))
+
+    reply = chat(msg, user_id, language)
     return jsonify(reply)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True,port=8000)
+    app.run(host='0.0.0.0', debug=True, port=8000)
