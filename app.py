@@ -1,18 +1,21 @@
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import os
-import google.generativeai as genai
+from openai import OpenAI
+
 from fpdf import FPDF
 import base64
 from eng_to_arabic import EngToArabic
 import asyncio
+
 app = Flask(__name__)
 load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Use consistent naming
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Use consistent naming
 
-# Configure the generative AI model
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash-exp")
+# Configure the OpenAI API
+client = OpenAI(
+  api_key=OPENAI_API_KEY,
+)
 
 @app.route("/generate_policy", methods=["POST"])
 def generate_policy():
@@ -517,15 +520,22 @@ tables.
 
     try:
         # Generate content using the prompt
-        response = model.generate_content(prompt)
-        print(response.text)
-        generated_policy=response.text
+        response = response = client.chat.completions.create(
+             model="gpt-4o-mini",
+            store=True,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+
+        )
+        generated_policy = response.choices[0].message.content
+        print(generated_policy)
+
         if language == "arabic":
             async def main(policy):
                 engtoarabic = EngToArabic()
                 return await engtoarabic.translate(policy)
             generated_policy = asyncio.run(main(generated_policy))
-
 
         # Create PDF
         pdf = FPDF()
@@ -539,37 +549,17 @@ tables.
             pdf.set_font("Arial", size=12)
 
         pdf.multi_cell(0, 10, generated_policy)
-        pdf_filename = f"{policy_name}.pdf"
-        # pdf.output(pdf_filename)
         pdf.output("temp.pdf")
-
+        pdf.output("output.pdf")
         with open("temp.pdf", "rb") as pdf_file:
             encoded_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
 
-        os.remove("temp.pdf") #Remove the temporary file
+        os.remove("temp.pdf")  # Remove the temporary file
 
         return jsonify({"generated_policy": generated_policy, "pdf": encoded_pdf})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@app.route("/compare", methods=["POST"])
-def compare_policy():
-    data = request.get_json()
-    # Input validation (important for security and robustness)
-    required_fields = [
-        "policy1",
-        "policy2"
-    ]
-    if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing required fields"}), 400
-    policy_text1 = data["policy1"]
-    policy_text2 = data["policy2"]
-    # Generate the comparison
-    prompt = f"Compare the following two policies:\n\nPolicy 1:\n{policy_text1}\n\nPolicy 2:\n{policy_text2}\n\nComparison:.Give comparisons in points."
-    response = model.generate_content(prompt)
-    print(response.text)
-    comparison=response.text
-    return jsonify({"comparison": comparison})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
