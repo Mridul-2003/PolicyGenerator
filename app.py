@@ -520,7 +520,7 @@ tables.
 
     try:
         # Generate content using the prompt
-        response = response = client.chat.completions.create(
+        response = client.chat.completions.create(
              model="gpt-4o-mini",
             store=True,
             messages=[
